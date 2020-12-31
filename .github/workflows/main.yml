@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup DPL
+        run: gem install dpl
+      - name: Deploy with DPL (AWS CodeDeploy)
+        run: |
+          dpl \
+          --provider=codedeploy \
+          --access_key_id=$AWS_ACCESS_KEY \
+          --application=$APPLICATION_NAME \
+          --deployment_group=$DEPLOYMENT_GROUP \
+          --bucket=$BUCKET 
+        env:
+          AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
+          APPLICATION_NAME: ${{secrets.APPLICATION_NAME}}
+          DEPLOYMENT_GROUP: ${{secrets.DEPLOYMENT_GROUP}}
+          BUCKET: ${{secrets.BUCKET}}
