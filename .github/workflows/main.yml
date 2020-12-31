@@ -23,11 +23,13 @@ jobs:
           dpl \
           --provider=codedeploy \
           --access_key_id=$AWS_ACCESS_KEY \
+          --secret_access_key=$AWS_SECRET_ACCESS_KEY \
           --application=$APPLICATION_NAME \
           --deployment_group=$DEPLOYMENT_GROUP \
           --bucket=$BUCKET 
         env:
           AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           APPLICATION_NAME: ${{secrets.APPLICATION_NAME}}
           DEPLOYMENT_GROUP: ${{secrets.DEPLOYMENT_GROUP}}
           BUCKET: ${{secrets.BUCKET}}
