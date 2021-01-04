@@ -18,6 +18,25 @@ jobs:
           ruby-version: 2.6.x
       - name: Setup DPL
         run: gem install dpl
+      - name: Prepare zip
+        run: |
+          zip -r latest * && \
+          mkdir -p dpl_cd_upload && \
+          mv latest.zip dpl_cd_upload/latest/zip
+      - name: Upload Zip to S3
+        run: |
+          dpl \
+          --provider=s3 \
+          --access_key_id=$AWS_ACCESS_KEY \
+          --secret_access_key=$AWS_SECRET_ACCESS_KEY \
+          --local_dir=dpl_cd_upload \
+          --skip_cleanup \
+          --bucket=$BUCKET
+        env:
+          AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          BUCKET: ${{secrets.BUCKET}}
+
       - name: Deploy with DPL (AWS CodeDeploy)
         run: |
           dpl \
@@ -26,10 +45,11 @@ jobs:
           --secret_access_key=$AWS_SECRET_ACCESS_KEY \
           --application=$APPLICATION_NAME \
           --deployment_group=$DEPLOYMENT_GROUP \
-          --bucket=$BUCKET 
+          --bucket=$BUCKET
         env:
           AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           APPLICATION_NAME: ${{secrets.APPLICATION_NAME}}
           DEPLOYMENT_GROUP: ${{secrets.DEPLOYMENT_GROUP}}
           BUCKET: ${{secrets.BUCKET}}
+
