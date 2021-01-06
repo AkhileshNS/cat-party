@@ -34,7 +34,7 @@ jobs:
         run: |
           aws deploy create-deployment \
           --application-name $APPLICATION_NAME \
-          --deployment-config-name CodeDeployDefault.OneAtATime 
+          --deployment-config-name CodeDeployDefault.OneAtATime \
           --deployment-group-name $DEPLOYMENT_GROUP \
           --s3-location bucket=$BUCKET,bundleType=zip,key=dist.zip \
           --ignore-application-stop-failures
