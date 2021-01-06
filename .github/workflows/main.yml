@@ -1,0 +1,47 @@
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.6.x
+      - name: Setup DPL
+        run: gem install dpl
+      - name: Prepare zip
+        run: |
+          zip -r -X dist.zip *
+      - name: Upload Zip to S3
+        run: aws s3 cp dist.zip s3://$BUCKET
+        env:
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          BUCKET: ${{secrets.BUCKET}}
+          AWS_DEFAULT_REGION: ${{secrets.REGION}}
+
+      - name: Deploy with AWS CodeDeploy
+        run: |
+          aws deploy create-deployment \
+          --application-name $APPLICATION_NAME \
+          --deployment-config-name CodeDeployDefault.OneAtATime \
+          --deployment-group-name $DEPLOYMENT_GROUP \
+          --s3-location bucket=$BUCKET,bundleType=zip,key=dist.zip \
+          --ignore-application-stop-failures
+        env:
+          APPLICATION_NAME: ${{secrets.APPLICATION_NAME}}
+          DEPLOYMENT_GROUP: ${{secrets.DEPLOYMENT_GROUP}}
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          BUCKET: ${{secrets.BUCKET}}
+          AWS_DEFAULT_REGION: ${{secrets.REGION}}
