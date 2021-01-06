@@ -21,39 +21,27 @@ jobs:
         run: gem install dpl
       - name: Prepare zip
         run: |
-          zip -r latest * && \
-          mkdir -p dpl_cd_upload && \
-          mv latest.zip dpl_cd_upload/latest.zip
+          zip -r -X dist.zip *
       - name: Upload Zip to S3
-        run: |
-          dpl \
-          --provider=s3 \
-          --access_key_id=$AWS_ACCESS_KEY \
-          --secret_access_key=$AWS_SECRET_ACCESS_KEY \
-          --local_dir=dpl_cd_upload \
-          --skip_cleanup \
-          --bucket=$BUCKET \
-          --region=$REGION
+        run: aws s3 cp dist.zip s3://$BUCKET
         env:
-          AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           BUCKET: ${{secrets.BUCKET}}
-          REGION: ${{secrets.REGION}}
+          AWS_DEFAULT_REGION: ${{secrets.REGION}}
 
-      - name: Deploy with DPL (AWS CodeDeploy)
+      - name: Deploy with AWS CodeDeploy
         run: |
-          dpl \
-          --provider=codedeploy \
-          --access_key_id=$AWS_ACCESS_KEY \
-          --secret_access_key=$AWS_SECRET_ACCESS_KEY \
-          --application=$APPLICATION_NAME \
-          --deployment_group=$DEPLOYMENT_GROUP \
-          --bucket=$BUCKET \
-          --key=latest.zip \
-          --bundle_type=zip
+          aws deploy create-deployment \
+          --application-name $APPLICATION_NAME \
+          --deployment-config-name CodeDeployDefault.OneAtATime 
+          --deployment-group-name $DEPLOYMENT_GROUP \
+          --s3-location bucket=$BUCKET,bundleType=zip,key=dist.zip \
+          --ignore-application-stop-failures
         env:
-          AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
-          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           APPLICATION_NAME: ${{secrets.APPLICATION_NAME}}
           DEPLOYMENT_GROUP: ${{secrets.DEPLOYMENT_GROUP}}
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           BUCKET: ${{secrets.BUCKET}}
+          AWS_DEFAULT_REGION: ${{secrets.REGION}}
